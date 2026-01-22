@@ -1,0 +1,228 @@
+#!/usr/bin/env python3
+"""
+Test client for the HSFEI Pickoff daemon.
+
+This script connects to the pickoff daemon and tests status queries.
+"""
+
+import argparse
+import logging
+import sys
+import os
+
+from hispec.daemon import HispecDaemon
+
+
+class TestClient(HispecDaemon):
+    """Test client for pickoff daemon - runs status queries."""
+
+    peer_id = "test-client"
+    transport = "rabbitmq"
+    rabbitmq_url = "amqp://localhost"  # RabbitMQ on hispec
+    discovery_enabled = False
+
+    # pub/sub topics
+    topics = {}
+
+    def __init__(self, daemon_id="atcfwheel", verbose=False):
+        """Initialize the test client.
+
+        Args:
+            daemon_id: Peer ID of the daemon (default: hsfei.pickoff)
+            verbose: Enable verbose output
+        """
+        super().__init__()
+        self.daemon_id = daemon_id
+        self.verbose = verbose
+        self.logger = logging.getLogger(self.peer_id)
+
+    def on_start(self, libby):
+        """Called when client starts - run all tests."""
+        self.logger.info(f"Test client started, connecting to {self.daemon_id} via RabbitMQ")
+
+        # Give the connection a moment to establish
+        import time
+        time.sleep(1)
+
+        print("\n" + "="*60)
+        print("Testing HSFEI Filter Wheel Daemon Get and Set functionality")
+        print("="*60)
+
+
+        # Example 1: Gets
+        print("\n[TEST 1] Getting current position and status,...")
+        try:
+            result = libby.request(self.daemon_id, "position.get", {}, ttl_ms=5000)
+            ##print(result)
+            resp = result.get("resp") if result else {}
+            #data = resp.get("data")
+            if resp and resp.get("ok"):
+                print(f"✓ Position: {resp.get('position')}")
+            else:
+                error = resp.get('error', 'Unknown error') if resp else 'No response'
+                print(f"✗ Position query failed: {error}")
+        except Exception as e:
+            print(f"✗ Exception during position query: {e}")
+
+        try:
+            result = libby.request(self.daemon_id, "status.get", {}, ttl_ms=5000)
+            #print(result)
+            resp = result.get("resp") if result else {}
+            #data = resp.get("data")
+            if resp and resp.get("ok"):
+                print(f"✓ Status: {resp.get('status')}")
+            else:
+                error = resp.get('error', 'Unknown error') if resp else 'No response'
+                print(f"✗ Status query failed: {error}")
+        except Exception as e:
+            print(f"✗ Exception during position query: {e}")
+
+        # Example 2: Sets
+        print("\n[TEST 2] setting position and checking...")
+        try:
+            result = libby.request(self.daemon_id, "position.set", {"position":3}, ttl_ms=5000)
+            resp = result.get("resp", {}) if result else {}
+            time.sleep(1)
+            result = libby.request(self.daemon_id, "position.get", {}, ttl_ms=5000)
+            resp = result.get("resp") if result else {}
+            #data = resp.get("data")
+            if resp and resp.get("ok"):
+                print(f"✓ Position: {resp.get('position')}")
+            else:
+                error = resp.get('error', 'Unknown error') if resp else 'No response'
+                print(f"✗ Position query failed: {error}")
+            if int(resp.get('position')) == 3:
+                print(f"Moved and Communicated correctly to position 3!")
+            else:
+                print(f"Did not  move as expected")
+        except Exception as e:
+            print(f"✗ Exception during set and check: {e}")
+        try:
+            result = libby.request(self.daemon_id, "position.set", {"position":1}, ttl_ms=5000)
+            resp = result.get("resp", {}) if result else {}
+            time.sleep(1)
+            result = libby.request(self.daemon_id, "position.get", {}, ttl_ms=5000)
+            resp = result.get("resp") if result else {}
+            #data = resp.get("data")
+            if resp and resp.get("ok"):
+                print(f"✓ Position: {resp.get('position')}")
+            else:
+                error = resp.get('error', 'Unknown error') if resp else 'No response'
+                print(f"✗ Position query failed: {error}")
+            if int(resp.get('position')) == 1:
+                print(f"Moved and Communicated correctly to position 1!")
+            else:
+                print(f"Did not  move as expected")
+        except Exception as e:
+            print(f"✗ Exception during set and check: {e}")
+        
+        # Example 3: Named Postions
+        print("\n[TEST 3] setting position and checking...")
+        try:
+            result = libby.request(self.daemon_id, "position.get_named", {}, ttl_ms=5000)
+            resp = result.get("resp", {}) if result else {}
+            time.sleep(1)
+            #data = resp.get("data")
+            if resp and resp.get("ok"):
+                print(f"✓ Named Position: {resp.get('named_pos')}")
+            else:
+                error = resp.get('error', 'Unknown error') if resp else 'No response'
+                print(f"✗ Position query failed: {error}")
+        except Exception as e:
+            print(f"✗ Exception during set and check: {e}")
+        try:
+            result = libby.request(self.daemon_id, "position.set_named", {"named_pos":"nd5"}, ttl_ms=5000)
+            resp = result.get("resp", {}) if result else {}
+            time.sleep(2)
+            result = libby.request(self.daemon_id, "position.get_named", {}, ttl_ms=5000)
+            resp = result.get("resp") if result else {}
+            #data = resp.get("data")
+            if resp and resp.get("ok"):
+                print(f"✓ Named Position: {resp.get('named_pos')}")
+            else:
+                error = resp.get('error', 'Unknown error') if resp else 'No response'
+                print(f"✗ Position query failed: {error}")
+            if resp.get('named_pos') == "nd5":
+                print(f"Moved and Communicated correctly to named position nd5!")
+            else:
+                print(f"Did not  move as expected")
+        except Exception as e:
+            print(f"✗ Exception during set and check: {e}")
+        try:
+            result = libby.request(self.daemon_id, "position.set_named", {"named_pos":"clear"}, ttl_ms=5000)
+            resp = result.get("resp", {}) if result else {}
+            time.sleep(2)
+            result = libby.request(self.daemon_id, "position.get_named", {}, ttl_ms=5000)
+            #print(result)
+            resp = result.get("resp") if result else {}
+            #data = resp.get("data")
+            if resp and resp.get("ok"):
+                print(f"✓ Named Position: {resp.get('named_pos')}")
+            else:
+                error = resp.get('error', 'Unknown error') if resp else 'No response'
+                print(f"✗ Position query failed: {error}")
+            if resp.get('named_pos') == "clear":
+                print(f"Moved and Communicated correctly to named position clear!")
+            else:
+                print(f"Did not  move as expected")
+        except Exception as e:
+            print(f"✗ Exception during set and check: {e}")
+ 
+        print("\n" + "="*60)
+        print("Testing Complete")
+        print("="*60 + "\n")
+
+        # Stop the client after tests complete
+        libby.stop()
+
+
+def main():
+    """Main entry point for the test client."""
+    parser = argparse.ArgumentParser(
+        description='Test client for ATC FWheel daemon (status queries only)'
+    )
+    parser.add_argument(
+        '-v', '--verbose',
+        action='store_true',
+        help='Enable verbose logging'
+    )
+    parser.add_argument(
+        '-d', '--daemon-id',
+        type=str,
+        default='atcfwheel',
+        help='Peer ID of the daemon to test (default: atcfwheel)'
+    )
+
+    args = parser.parse_args()
+
+    # Setup logging
+    log_level = logging.DEBUG if args.verbose else logging.INFO
+    logging.basicConfig(
+        level=log_level,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+
+    # Disable noisy Pika logging
+    logging.getLogger('pika').setLevel(logging.WARNING)
+
+    try:
+        # Create and run test client
+        client = TestClient(
+            daemon_id=args.daemon_id,
+            verbose=args.verbose
+        )
+        client.serve()
+
+    except KeyboardInterrupt:
+        print("\nTest client interrupted by user")
+        sys.exit(0)
+    except Exception as e:
+        print(f"Error running test client: {e}", file=sys.stderr)
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
+
+
+if __name__ == '__main__':
+    main()
+    
