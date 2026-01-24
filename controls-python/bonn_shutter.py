@@ -7,19 +7,29 @@ import socket
 import struct
 
 class BonnShutterCommands:
-    """Class for Bonn Shutter Commands"""
+    """
+    Class for Bonn Shutter Commands
+    bonn shutter 100m has 2 blades: A and B
+    0 corresponds to blade A
+    1 corresponds to blade B
+    bonn shutter command format:
+    <command> <value>\n
+    """
     # Command Constants
     OPEN = "os"
     CLOSE = "cs"
     STANDARD_CMDS = "s?"
     SPECIAL_CMDS = "s!"
-    INTERACTIVE_MODE = "ia 1"
-    BLADE_A_PARAMS = "sh 0"
-    BLADE_B_PARAMS = "sh 1"
+    INTERACTIVE_MODE = "ia"         # value after->ex: "ia 1"
+    BLADE_PROFILE_PARAMS = "sh"     # value after->ex: "sh 0/1" = A/B
     HOST_COM_PARAMS = "pp"
-    MSEC_EXPOSE_TIME = "ex"
+    MSEC_EXPOSE_TIME = "ex"         # value after->ex: "ex 500" for 500 milliseconds
     SHUTTER_IN_APERTURE = "ss"
-    ACCEL_PARAMS = "ac"
+    ACCEL_PARAMS = "ac"             # value after->ex: "ac 25000"
+    CHECK_STATUS = "sv"             # value after->ex: "sv 0/1" = A/B
+    FACTORY_RESET = "fd"
+    
+
 
 class BonnShutterResponses:
     """Class for Bonn Shutter Responses"""
@@ -37,6 +47,12 @@ class BonnShutterController():
 
     Commands = BonnShutterCommands
     Responses = BonnShutterResponses
+    state = {
+        'is_open': False,
+        'is_busy': False,
+        'last_command': None,
+        'error_code': None,
+    }
 
     def __init__(self):
         self.socket = None
