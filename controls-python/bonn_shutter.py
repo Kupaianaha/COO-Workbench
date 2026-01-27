@@ -120,11 +120,11 @@ class BonnShutterController():
             raise ConnectionError("Not connected to the Bonn Shutter device.")
 
         try:
-            if self.socket:
-                self.socket.sendall(command.encode('utf-8') + b'\n')
+            if self.state['connection_type'] == 'rj45':
+                self.socket.sendall(command.encode('utf-8') + b'\r')
                 response = self.socket.recv(1024).decode('utf-8').strip()
-            else:
-                self.dev.write((command + '\n').encode('utf-8'))
+            elif self.state['connection_type'] == 'usb':
+                self.dev.write((command.encode('utf-8') + b'\r'))
                 response = self.dev.readline().decode('utf-8').strip()
             return response
         except socket.error as e:
