@@ -1,10 +1,7 @@
 """
 Docstring for repositories.COO-Workbench.controls-python.bonn_shutter
 """
-import errno
-import time
 import socket
-import struct
 import serial
 import serial.tools.list_ports
 
