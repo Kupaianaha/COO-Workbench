@@ -123,7 +123,7 @@ class BonnShutterController():
             if self.state['connection_type'] == 'rj45':
                 self.socket.sendall(command.encode('utf-8') + b'\r')
                 response = self.socket.recv(1024).decode('utf-8').strip()
-            elif self.state['connection_type'] == 'usb':
+            else:
                 self.dev.write((command.encode('utf-8') + b'\r'))
                 response = self.dev.readline().decode('utf-8').strip()
             return response
