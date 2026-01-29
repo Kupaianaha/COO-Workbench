@@ -41,15 +41,19 @@ class BonnShutterResponses:
 
 class BonnShutterController():
     """
-    Docstring for BonnShutterController
+    BonnShutterController - USB and RJ45 control for Bonn Shutter devices.
+       -100m model with 2 blades (A and B).
+       -Communicates via socket (RJ45) or serial (USB FTDI).
     """
 
     Commands = BonnShutterCommands
     Responses = BonnShutterResponses
+    status = {0:None}
     state = {
         'is_open': False,
         'is_busy': False,
         'last_command': None,
+        'shutter_state': None,
         'error_code': None,
         'connection_type': None,  # 'rj45' or 'usb'
         'is_connected': False
@@ -64,7 +68,7 @@ class BonnShutterController():
         self.ftdi_ports = []
         self.dev = None
 
-    def connect_rj45(self, host: str, port: int):
+    def connect_rj45(self, host: str, port: int) -> None:
         """Connect to the Bonn Shutter device."""
         self.host = host
         self.port = port
@@ -77,17 +81,20 @@ class BonnShutterController():
         except socket.error as e:
             raise ConnectionError(f"Could not connect to {self.host}:{self.port} - {e}") from e
 
-    def connect_usb(self, device_path: str):
+    def connect_usb(self, device_path: str) -> None:
         """Connect to the Bonn Shutter device via USB (placeholder)."""
         try:
             self.dev = serial.Serial(port=device_path, baudrate=19200, bytesize=8,
                                          stopbits=1, parity=serial.PARITY_NONE)
+            #clear input/output buffers and ensure connection is live
+            self.dev.reset_input_buffer()
+            self.dev.reset_output_buffer()
             self.state['connection_type'] = 'usb'
             self.state['is_connected'] = True
         except serial.SerialException as e:
             raise ConnectionError(f"Could not connect to USB device at {device_path} - {e}") from e
 
-    def list_devices(self):
+    def list_devices(self) -> None:
         """List available USB devices (Bonn Shutter devices typically FTDI)."""
         self._usb_ports=serial.tools.list_ports.comports()
 
@@ -99,9 +106,10 @@ class BonnShutterController():
             print(f'p.description: {p.description}')
             print(f'p.manufacturer: {p.manufacturer}')
             if 'FTDI' in p.manufacturer:
-                self.ftdi_ports.append(p.device)
+                return self.ftdi_ports.append(p.device)
+            return None
 
-    def disconnect(self):
+    def disconnect(self) -> None:
         """Disconnect from the Bonn Shutter device."""
         if self.socket:
             self.socket.close()
@@ -111,7 +119,7 @@ class BonnShutterController():
             self.dev = None
         self.state['is_connected'] = False
 
-    def send_command(self, command: str) -> str:
+    def send_command(self, command: str) -> list[str]:
         """Send a command to the Bonn Shutter device and return the response."""
         if not self.socket and not self.dev:
             raise ConnectionError("Not connected to the Bonn Shutter device.")
@@ -119,30 +127,114 @@ class BonnShutterController():
         try:
             if self.state['connection_type'] == 'rj45':
                 self.socket.sendall(command.encode('utf-8') + b'\r')
-                response = self.socket.recv(1024).decode('utf-8').strip()
-            else:
+                return self._read_until_prompt_socket()
+            elif self.state['connection_type'] == 'usb':
                 self.dev.write((command.encode('utf-8') + b'\r'))
-                response = self.dev.readline().decode('utf-8').strip()
-            return response
+                return self._read_until_prompt_usb()
+            raise ConnectionError("Unknown connection type.")
         except socket.error as e:
             raise IOError(f"Error sending command '{command}': {e}") from e
 
-    def open_shutter(self):
+    def _read_until_prompt_usb(self, timeout=1.0) -> list[str]:
+        """
+        Read lines until 'c>' prompt is seen.
+        Returns a list of decoded response lines (excluding prompt).
+        """
+        lines = []
+        self.dev.timeout = timeout
+        while True:
+            raw = self.dev.readline()
+            if not raw:
+                break
+            line = raw.decode("utf-8", errors="ignore").strip()
+            if line == "c>":
+                break
+            if line:
+                lines.append(line)
+        return lines
+
+    def _read_until_prompt_socket(self, timeout=1.0) -> list[str]:
+        """socket version of read until prompt"""
+        self.socket.settimeout(timeout)
+        buffer = ""
+        lines = []
+        while True:
+            chunk = self.socket.recv(1024).decode("utf-8", errors="ignore")
+            if not chunk:
+                break
+            buffer += chunk
+            while "\n" in buffer:
+                line, buffer = buffer.split("\n", 1)
+                line = line.strip()
+                if line == "c>":
+                    return lines
+                if line:
+                    lines.append(line)
+        return lines
+
+    def open_shutter(self) -> None:
         """Open the Bonn Shutter."""
-        response = self.send_command(self.Commands.OPEN)
-        if response == "OK":
+        if self.state['is_connected'] is False:
+            raise RuntimeError("Shutter is not connected")
+        try:
+            state = self._parse_ss(self.send_command(self.Commands.OPEN))
+            if state != 1:
+                raise RuntimeError("Shutter failed to open")
             self.state['is_open'] = True
             self.state['last_command'] = self.Commands.OPEN
-        else:
-            self.state['error_code'] = response
-            raise RuntimeError(f"Failed to open shutter: {response}")
+            self.state['shutter_state'] = state
+        except Exception as e:
+            self.state['error_code'] = str(e)
+            raise RuntimeError(f"Failed to open shutter: {e}") from e
 
-    def close_shutter(self):
+    def close_shutter(self) -> None:
         """Close the Bonn Shutter."""
-        response = self.send_command(self.Commands.CLOSE)
-        if response == "OK":
+        if self.state['is_connected'] is False:
+            raise RuntimeError("Shutter is not connected")
+        try:
+            state = self._parse_ss(self.send_command(self.Commands.CLOSE))
+            if state == 1:
+                raise RuntimeError("Shutter failed to close")
             self.state['is_open'] = False
             self.state['last_command'] = self.Commands.CLOSE
-        else:
-            self.state['error_code'] = response
-            raise RuntimeError(f"Failed to close shutter: {response}")
+            self.state['shutter_state'] = state
+        except Exception as e:
+            self.state['error_code'] = str(e)
+            raise RuntimeError(f"Failed to close shutter: {e}") from e
+
+    def get_status(self) -> dict:
+        """Get the status of the Bonn Shutter."""
+        self.status["A"] = self._parse_sv(self.send_command(self.Commands.CHECK_STATUS + " 1"))
+        self.status["B"] = self._parse_sv(self.send_command(self.Commands.CHECK_STATUS + " 2"))
+        self.status["system"] = self.send_command(self.Commands.CHECK_STATUS + " 0")
+        return self.status
+
+    def _parse_sv(self, lines: list[str]) -> dict:
+        """Parse 'sv x' response into structured flags"""
+        status = {
+            "blade": None,
+            "flags": {}
+        }
+
+        for line in lines:
+            if line.startswith("Blade"):
+                status["blade"] = line.split()[-1]
+                continue
+
+            if "ON" in line:
+                key = line.replace("ON", "").strip()
+                status["flags"][key] = True
+            else:
+                status["flags"][line.strip()] = False
+
+        return status
+
+    def _parse_ss(self, lines: list[str]) -> int | None:
+        """parse 'ss' response to get shutter state"""
+        if not lines:
+            return None
+
+        try:
+            return int(lines[0].split()[0])
+        except ValueError:
+            return None
