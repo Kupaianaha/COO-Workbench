@@ -1,38 +1,42 @@
 # Camera Control Workbench
 
-This directory serves as a **development workbench and storage area** for camera-related logic. It is not intended to be a polished, standalone library; rather, it is a sandbox for drafting and refining code before it is integrated into the larger [camera-interface](https://github.com/your-repo-link-here) project.
+This directory serves as a **development sandbox and storage area** for camera-related logic, driver interactions, and control scripts. It is designed as a flexible workspace for drafting and refining code across multiple languages before it is deployed into larger production environments.
 
 ---
 
-## 📂 Purpose
-The `camera-control` directory is used for:
-* **Prototyping:** Rapidly developing C, C++, and Python functions without the overhead of the main project structure.
-* **Isolation:** Testing specific camera behaviors or hardware interactions in a controlled environment.
-* **Staging:** Storing helper functions and experimental scripts that are destined for the `camera-interface` repository.
+## Purpose
+The `camera-control` repository is a dedicated space for:
+* **Rapid Prototyping:** Developing C, C++, and Python logic for camera systems without the constraints of a final project structure.
+* **Hardware Interfacing:** Testing low-level commands, frame capture logic, and sensor configurations.
+* **Code Staging:** Storing modular functions and helper scripts that can be exported to various camera-related projects.
 
-## 🛠 Directory Structure
-The workspace is designed to be multi-language, primarily focusing on:
-* **`.cpp` / `.c`:** Low-level logic, performance-critical functions, and hardware-specific interfaces.
-* **`.py`:** High-level testing scripts, data visualization, and automation.
-
-### Current Status
-* Contains core `.cpp` functions currently being transitioned into the `camera-interface` project.
+## Directory Structure & Language Support
+This workbench is built to accommodate a multi-language development flow:
+* **`.cpp` / `.c`:** High-performance logic, low-level driver hooks, and real-time processing functions.
+* **`.py`:** Automation scripts, data analysis, and high-level testing wrappers.
+* **Experimental Files:** Temporary drafts and "scratchpad" code used during the R&D process.
 
 ---
 
-## 🚀 Workflow
-1.  **Develop:** Write and iterate on new logic within this directory.
-2.  **Test:** Use this workbench to ensure functions handle camera nuisances and hardware edge cases.
-3.  **Deploy:** Once a feature is stable, migrate the code to the primary `camera-interface` repository.
+## Workflow
+1. **Experiment:** Use this space to solve specific camera challenges (e.g., exposure control, buffer management, or format conversion).
+2. **Refine:** Iterate on the code in this isolated environment to ensure stability.
+3. **Export:** Once a module or function is verified, it can be integrated into its respective target project.
 
-> **Note:** As this is a development area, expect code to be in various states of completion. Documentation within individual files is encouraged to track specific hardware dependencies (e.g., V4L2, OpenCV, or specific SDKs).
+> **Note:** As this is a development workbench, code may be in various stages of completion. Please refer to individual file headers for specific hardware requirements or library dependencies (e.g., OpenCV, V4L2, or custom SDKs).
 
 ---
 
-## 👥 Contributors
-* **Lead Developer:** [Your Name/GitHub Username]
-* *Feel free to list other collaborators or internal team members here.*
+## Contributors
+* **Developer:** Elijah Anakalea-Buckley/Kupaianaha
 
-## 📄 License
-This workbench code is currently intended for internal use as part of the **camera-interface** project. 
-[Insert License Type, e.g., MIT or Proprietary]
+## License
+This project is licensed under the **MIT License**:
+
+Copyright (c) 2026 Elijah Anakalea-Buckley
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
