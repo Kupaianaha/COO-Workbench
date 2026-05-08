@@ -1,0 +1,13 @@
+[Unit]
+Description=Run the Outlet and Archive workflow every 6 hours UTC
+
+[Timer]
+# Runs every 6 hours on the dot in UTC
+OnCalendar=*-*-* 00/6:00:00 UTC
+# If the computer was off during a window, run it immediately on boot
+Persistent=true
+# Points specifically to the service above
+Unit=periodic_accel_grab.service
+
+[Install]
+WantedBy=timers.target

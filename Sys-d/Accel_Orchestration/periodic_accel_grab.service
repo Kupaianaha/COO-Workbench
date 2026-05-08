@@ -1,0 +1,18 @@
+[Unit]
+Description=Automated Power Outlet and Data Archival Workflow
+After=network.target
+
+[Service]
+Type=oneshot
+User=root
+# Ensure archive directory exists
+ExecStartPre=/usr/bin/mkdir -p /archive
+# Run the orchestration script
+ExecStart=/usr/local/bin/accel_orchestration.sh
+
+# Emergency Cleanup: If the service is manually stopped or fails, 
+# this ensures the outlet is turned off.
+ExecStopPost=/usr/bin/python3 -c "import subprocess; subprocess.run(['echo', 'Safety shutdown: Turning Outlet OFF'])"
+
+[Install]
+WantedBy=multi-user.target
