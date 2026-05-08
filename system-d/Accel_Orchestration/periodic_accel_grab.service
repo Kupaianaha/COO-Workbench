@@ -6,13 +6,14 @@ After=network.target
 Type=oneshot
 User=root
 # Ensure archive directory exists
-ExecStartPre=/usr/bin/mkdir -p /archive
+# Force UTC time using the -u flag
+ExecStartPre=/usr/bin/bash -c '/home/nfiudev/HISPEC/Accel_System/ mkdir -p /archive/$(date -u +"%%m%%d%%y")'
 # Run the orchestration script
 ExecStart=/usr/local/bin/accel_orchestration.sh
 
 # Emergency Cleanup: If the service is manually stopped or fails, 
 # this ensures the outlet is turned off.
-ExecStopPost=/usr/bin/python3 -c "import subprocess; subprocess.run(['echo', 'Safety shutdown: Turning Outlet OFF'])"
+ExecStopPost=/usr/bin/echo "modify -s k2aopower OUTLET_HC1=off"
 
 [Install]
 WantedBy=multi-user.target
