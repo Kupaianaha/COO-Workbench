@@ -82,7 +82,7 @@ The scheduler that triggers the workflow every 6 hours (UTC).
     Description=Run the Outlet and Archive workflow every 6 hours UTC
 
     [Timer]
-    OnCalendar=*-*-* 00/6:00:00 UTC
+    OnCalendar=*-*-* 00/4:00:00 UTC
     Persistent=true
     Unit=periodic_accel_grab.service
 
@@ -132,3 +132,27 @@ If ``KPIC_AccelReadout_ShmWriter`` is sensitive to being "killed" (e.g., it need
     kill -SIGINT $BIN_TWO_PID
 
 This sends a signal similar to ``Ctrl+C``, allowing for a more graceful shutdown.
+
+
+
+Current File Locations
+======================
+
++------------------+--------------------------------------------------+
+| File             | Path                                             |
++==================+==================================================+
+| Shell script     | ``/usr/local/bin/accel_orchestration.sh``        |
++------------------+--------------------------------------------------+
+| Systemd service  | ``/etc/systemd/system/periodic_accel_grab.service`` |
++------------------+--------------------------------------------------+
+| Systemd timer    | ``/etc/systemd/system/periodic_accel_grab.timer``|
++------------------+--------------------------------------------------+
+
+.. note::
+
+   To deploy or update the workflow, give Keck the ``setup_accel_workflow.sh`` script and have them run:
+
+   .. code-block:: bash
+
+       cd /home/nfiudev/HISPEC/Accel_System/periodic_grab_src
+       sudo bash setup_accel_workflow.sh
