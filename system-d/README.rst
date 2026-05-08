@@ -1,4 +1,3 @@
-content = """
 ============================================================
 Systemd Utilities & Automation Scripts
 ============================================================
@@ -107,22 +106,3 @@ Best Practices
 
 - **Security:** Always run services with the least privilege necessary. Use ``User=`` and ``Group=`` directives.
 - **Sandboxing:** Utilize ``ProtectSystem=full`` and ``PrivateTmp=true`` for enhanced security.
-- **Logging:** Prefer logging to ``stdout/stderr`` so ``journald`` can capture the output automatically.
-
-Contributing
-============
-
-1. Fork the Project
-2. Create your Feature Branch (``git checkout -b feature/AmazingFeature``)
-3. Commit your Changes (``git commit -m 'Add some AmazingFeature'``)
-4. Push to the Branch (``git push origin feature/AmazingFeature``)
-5. Open a Pull Request
-
-License
-=======
-
-Distributed under the MIT License. See ``LICENSE`` for more information.
-"""
-
-with open("README.rst", "w") as f:
-    f.write(content)
