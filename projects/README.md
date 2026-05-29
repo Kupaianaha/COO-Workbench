@@ -1,3 +1,4 @@
+# Projects Workbench
 Welcome to the **Projects** workbench. This directory serves as a centralized development space for integrated, specialized, and highly dependent applications built on top of our core system frameworks. 
 
 Unlike standalone, general-purpose utilities (such as low-level `camera-control`, core `controls`, or isolated `daemon-testing`), the projects housed here represent complete, mission-specific implementations that orchestrate multiple dependencies to fulfill advanced operational requirements.
